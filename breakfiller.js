@@ -178,17 +178,18 @@ $(document).ready(function() {
         advanceDelay = (getParameterByName("dur") * 1000 || 10000),
         descriptionTruncLen = 300,
         weatherFormat = {
-            numRounds: 2,
+            numRounds: 3,
             numInEach: 4
         };
 
 
+    /* ---- INIT ---- */
 
     getTemplates()
         // .then(getNews);
         .then(getWeather);
 
-
+    /* ---- ---- ---- */
 
     function randNewsAPIurl() {
         var sourceIDs = getObjKeys(news.sources),
@@ -584,13 +585,19 @@ $(document).ready(function() {
         async function run() { // jshint ignore:line
             for (var round = 0; round < weatherFormat.numRounds; round++) {
                 var thisSlide = $(".weather tbody")[round];
+                $(thisSlide).fadeTo(0, 1);
+
                 for (var row = 0; row < weatherFormat.numInEach; row++) {
-                    // TODO: fadeTo the table rows, then fadeout that tbody/slide, then fadeTo next tbody/slide etc
                     var thisRow = $(thisSlide).children("tr")[row];
                     $(thisRow).fadeTo(fadeTime, 1);
                     await wait(200); // jshint ignore:line
                 }
+                await wait(advanceDelay); // jshint ignore:line
+                // TODO: Separate weather and news advance delay vars
+                $(thisSlide).fadeTo(fadeTime, 0);
+                await wait(fadeTime); // jshint ignore:line
             }
+            refresh();
         }
     }
 

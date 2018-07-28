@@ -206,8 +206,9 @@ body {
   border-image-slice: 1;
 }
 .weather table {
-  font-size: 20px;
+  display: grid;
   width: 100%;
+  font-size: 20px;
   font-weight: 600;
 }
 .weather thead {
@@ -215,6 +216,8 @@ body {
 }
 .weather tbody {
   display: none;
+  grid-column: 1;
+  grid-row: 1;
 }
 .weather tbody:first-of-type {
   display: table-row-group;
@@ -253,6 +256,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  padding-left: 4px; /* Offsets degree symbol for more centered look */
 }
 .weather .wind {
   width: 90px;
