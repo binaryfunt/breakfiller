@@ -18,7 +18,6 @@ $(document).ready(function() {
             },
             sort: "top",
             lastRandInts: []
-            // templateURL: "news-template.html", cannot load (cross origin request)
         },
 
         weather = {
@@ -164,7 +163,7 @@ $(document).ready(function() {
         },
 
         templates = {},
-        templateURLs = {
+        templateURLs = { // TODO switch to local links when deployed
             news: "https://binaryfunt.github.io/breakfiller/templates/news.html",
             weather: "https://binaryfunt.github.io/breakfiller/templates/weather.html",
             title: "https://binaryfunt.github.io/breakfiller/templates/title.html"
@@ -194,7 +193,6 @@ $(document).ready(function() {
     function randNewsAPIurl() {
         var sourceIDs = getObjKeys(news.sources),
             rand = randInt(sourceIDs, news);
-        console.log(rand);
         return "https://newsapi.org/v1/articles?source="+sourceIDs[rand]+"&sortBy="+news.sort+"&apiKey="+news.APIKey;
     }
     function randWeatherAPIurl() {
@@ -238,24 +236,22 @@ $(document).ready(function() {
         return Object.keys(obj).map(Number);
     }
     function getObjValues(obj) {
-        return Object.keys(obj).map(function(key) {
-            return obj[key];
-        });
+        return Object.keys(obj).map(key => obj[key]);
     }
     function erf(x){
         // erf(x) = 2/sqrt(pi) * integrate(from=0, to=x, e^-(t^2) ) dt
         // with using Taylor expansion,
         //        = 2/sqrt(pi) * sigma(n=0 to +inf, ((-1)^n * x^(2n+1))/(n! * (2n+1)))
         // calculationg n=0 to 50 below (note that inside sigma equals x when n = 0, and 50 may be enough)
-        var m = 1.00;
-        var s = 1.00;
-        var sum = x * 1.0;
-        for(var i = 1; i < 50; i++){
+        var m = 1.00,
+            s = 1.00,
+            sum = x * 1.0;
+        for (var i = 1; i < 50; i++) {
             m *= i;
             s *= -1;
             sum += (s * Math.pow(x, 2.0 * i + 1.0)) / (m * (2.0 * i + 1.0));
         }
-        return 2 * sum / Math.sqrt(3.14159265358979);
+        return 2 * sum / Math.sqrt(Math.PI);
     }
     function wait(delay) {
         return new Promise(resolve => setTimeout(resolve, delay));
@@ -274,7 +270,7 @@ $(document).ready(function() {
 
     function tempToHsl(temperature) {
         var x = parseFloat(temperature) + 100,
-    	   hue = 125 - 125*erf((x - 110) / 20);
+            hue = 125 - 125*erf((x - 110) / 20);
     	return "hsl("+hue+", 100%, 60%)";
     }
 
@@ -286,9 +282,6 @@ $(document).ready(function() {
     function getWeatherIconURL(response) {
         var iconID = weather.icons[response.weather[0].id],
             fragURL = "img/if_weather_";
-            function isDaytime() {
-                return (response.dt > response.sys.sunrise && response.dt < response.sys.sunset) || (response.dt < response.sys.sunrise && response.dt < response.sys.sunset - 86400);
-            }
         if (typeof iconID == 'number') {
             return fragURL+iconID+".svg";
         } else {
@@ -298,69 +291,16 @@ $(document).ready(function() {
                 return fragURL+iconID[1]+".svg";
             }
         }
+
+        function isDaytime() {
+            return (response.dt > response.sys.sunrise && response.dt < response.sys.sunset) || (response.dt < response.sys.sunrise && response.dt < response.sys.sunset - 86400);
+        }
     }
 
 
-    $.fn.slideshow = function(fadeTime, textElements) {
-        var self = this;
-            // deferred = new $.Deferred();
-
-        // Make a shared variable between the elements that call this function:
-        // This will call them in the order that were added
-        $.fn.slideshow.queue = $.fn.slideshow.queue || [];
-
-        $.fn.slideshow.queue.push(progress);
-
-        // If it's the 1st element added or no elements are in the queue, call progress()
-        if ($.fn.slideshow.queue.length == 1) {
-            $.fn.slideshow.queue[0]();
-        }
-
-        function start() {
-
-        }
-
-        function progress() {
-            // var textContainer = self.find(".text-container");
-            var textContainer = self.find(".text");
-            self.show();
-            // textContainer.height(textChildren.getMaxHeight());
-            textContainer.height(textContainer.height());
-            // console.log(textContainer.height());
-            // self.height(textChildren.getMaxHeight());
-            self.fadeTo(fadeTime, 1)
-                .promise().done(doTextType);
-        }
-
-        function doTextType() {
-            // console.log(textChildren.getMaxHeight());
-            textElements.each(function() {
-                // console.log("doing text type", $(this).html());
-                $(this).typeText()
-                    .then(clearCurrent);
-            });
-        }
-
-        function clearCurrent() {
-            // console.log("clearing current", self);
-            // console.log(self);
-            $.fn.slideshow.queue.shift();
-
-            self.fadeOut(fadeTime)
-                .promise().done(function() {
-                    if ($.fn.slideshow.queue.length > 0) {
-                        $.fn.slideshow.queue[0]();
-                    } else {
-                        // refresh();
-                    }
-                });
-        }
-    };
-
     $.fn.typeText = function() {
         var self = this;
-        return new Promise(function(resolve, reject) {
-                // deferred = new $.Deferred(),
+        return new Promise(resolve => {
             var str = self.html(),
                 i = 0,
                 isTag,
@@ -379,7 +319,7 @@ $(document).ready(function() {
                 }
 
                 if (isDone()) {
-                    setTimeout(resolve, advanceDelay);
+                    resolve();
                     return;
                 }
                 self.html(text);
@@ -397,20 +337,22 @@ $(document).ready(function() {
                 }
                 setTimeout(type, keystrokeDelay);
             }
-
-
         });
     };
 
-    $.fn.getMaxHeight = function() {
-        return Math.max.apply(null, this.map(function() {
-            return $(this).outerHeight(includeMargin = true);
-        }).get());
+    // $.fn.getMaxHeight = function() {
+    //     return Math.max.apply(null, this.map(function() {
+    //         return $(this).outerHeight(includeMargin = true);
+    //     }).get());
+    // };
+
+    $.fn.fixHeight = function() {
+        this.height(this.height());
     };
 
 
     function displayTitle(titleText) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(resolve => {
             var content = {
                 title: titleText
             },
@@ -486,15 +428,10 @@ $(document).ready(function() {
         var weatherHtml = Mustache.render(templates.weather, content);
         $(mainDiv).append(weatherHtml);
     }
-    // function populateArticleTemplate(template, article) {
-    //
-    //
-    //     newsSlideshow();
-    // }
 
 
     function getTemplates() {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
         //     $.when.apply(
         //         $,
         //         getObjValues(templateURLs).map(url => $.get(url))
@@ -506,7 +443,7 @@ $(document).ready(function() {
             //     promises.push($.get(URLsArray[i]));
             // }
             URLs.forEach(url => promises.push($.get(url)));
-            Promise.all(promises).then(function(responses) {
+            Promise.all(promises).then(responses => {
                 for (var i = 0; i < responses.length; i++) {
                     templates[templateNames[i]] = responses[i];
                 }
@@ -518,19 +455,15 @@ $(document).ready(function() {
 
     function getNews() {
         $.get(randNewsAPIurl())
-            .done(function(response) {
+            .done(response => {
                 var articles =  response.articles,
                     source = response.source;
-                    // articlePromises = [];
                 for (var i = 0; i < articles.length; i++) {
-                    // articlePromises.push(
                     createArticle(articles[i], source);
-                    // );
                 }
                 displayTitle(news.sources[source])
                     .then(newsSlideshow);
-                // Promise.all(articlePromises).then(newsSlideshow);
-            }).fail(function() {
+            }).fail(() => {
                 console.error("Failed to fetch news");
                 // TODO: retry request with new URL
             });
@@ -544,11 +477,11 @@ $(document).ready(function() {
         weather.lastRandInts.fill(-1);
 
         $.get(randWeatherAPIurl())
-            .done(function(response) {
+            .done(response => {
                 createWeatherView(response.list, title);
                 displayTitle(title)
                     .then(weatherSlideshow);
-            }).fail(function() {
+            }).fail(() => {
                 console.error("Failed to fetch weather");
                 // TODO: retry request with new URL
             });
@@ -556,23 +489,34 @@ $(document).ready(function() {
 
     function newsSlideshow() {
         var articles = $(".article");
-        articles.each(function() {
-            var textElements = $(this).find(".text");
-            $(this).slideshow(fadeTime, textElements);
-        });
+        run();
+
+        async function run() { // jshint ignore:line
+            for (var article of articles) {
+                var textContainer = $(article).find(".text");
+                $(article).show();
+                textContainer.fixHeight();
+                await $(article).fadeTo(fadeTime, 1).promise(); // jshint ignore:line
+                await textContainer.typeText(); // jshint ignore:line
+                await wait(advanceDelay); // jshint ignore:line
+                $(article).fadeOut(fadeTime);
+                await wait(fadeTime); // jshint ignore:line
+            }
+            refresh();
+        }
     }
 
     function weatherSlideshow() {
-        $(".weather").fadeTo(fadeTime, 1)
-            .promise().done(function() {
-                run();
-            });
+        $(".weather").fadeTo(fadeTime, 1);
+        run();
 
         async function run() { // jshint ignore:line
             for (var round = 0; round < weatherFormat.numRounds; round++) {
                 var thisSlide = $(".weather tbody")[round];
                 $(thisSlide).fadeTo(0, 1);
-
+                if (round != 0) {
+                    await wait(fadeTime); // jshint ignore:line
+                }
                 for (var row = 0; row < weatherFormat.numInEach; row++) {
                     var thisRow = $(thisSlide).children("tr")[row];
                     $(thisRow).fadeTo(fadeTime, 1);
@@ -581,9 +525,9 @@ $(document).ready(function() {
                 await wait(advanceDelay); // jshint ignore:line
                 // TODO: Separate weather and news advance delay vars
                 $(thisSlide).fadeTo(fadeTime, 0);
-                await wait(fadeTime); // jshint ignore:line
             }
-            refresh();
+            $(".weather").fadeOut(fadeTime)
+                .promise().done(refresh);
         }
     }
 
