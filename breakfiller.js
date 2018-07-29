@@ -186,8 +186,8 @@ $(document).ready(function() {
     /* ---- INIT ---- */
 
     getTemplates()
-        // .then(getNews);
-        .then(getWeather);
+        .then(getNews);
+        // .then(getWeather);
 
     /* ---- ---- ---- */
 
@@ -260,6 +260,10 @@ $(document).ready(function() {
     function wait(delay) {
         return new Promise(resolve => setTimeout(resolve, delay));
     }
+    function preloadImage(url) {
+        var image = new Image();
+        image.src = url;
+    }
 
     function mpsToMph(speed) {
         return Math.round(speed*3600 / 1609);
@@ -295,19 +299,6 @@ $(document).ready(function() {
             }
         }
     }
-
-    // function colorInTemperatures() {
-    //     $(".weather .temp").each(function() {
-    //         var temperature = this.dataset.temperature;
-    //         $(this).find("div").css("background", tempToHsl(temperature));
-    //     });
-    // }
-    // function rotateWeatherVanes() {
-    //     $(".weather .wind").each(function() {
-    //         var direction = this.dataset.direction;
-    //         $(this).find("img").css("transform", "rotate("+direction+"deg)");
-    //     });
-    // }
 
 
     $.fn.slideshow = function(fadeTime, textElements) {
@@ -360,7 +351,7 @@ $(document).ready(function() {
                     if ($.fn.slideshow.queue.length > 0) {
                         $.fn.slideshow.queue[0]();
                     } else {
-                        refresh();
+                        // refresh();
                     }
                 });
         }
@@ -447,6 +438,7 @@ $(document).ready(function() {
         if (content.description && content.description.length > descriptionTruncLen) {
             content.description = truncate(content.description);
         }
+        preloadImage(content.imgLink); // TODO prioritise images based on order of appearance
         var articleHtml = Mustache.render(templates.news, content);
         $(mainDiv).append(articleHtml);
     }
@@ -530,7 +522,6 @@ $(document).ready(function() {
                 var articles =  response.articles,
                     source = response.source;
                     // articlePromises = [];
-                // console.log(articles[0]);
                 for (var i = 0; i < articles.length; i++) {
                     // articlePromises.push(
                     createArticle(articles[i], source);
@@ -554,15 +545,12 @@ $(document).ready(function() {
 
         $.get(randWeatherAPIurl())
             .done(function(response) {
-                console.log(response.list);
                 createWeatherView(response.list, title);
                 displayTitle(title)
                     .then(weatherSlideshow);
-
-                // colorInTemperatures();
-                // rotateWeatherVanes();
             }).fail(function() {
                 console.error("Failed to fetch weather");
+                // TODO: retry request with new URL
             });
     }
 
@@ -570,10 +558,8 @@ $(document).ready(function() {
         var articles = $(".article");
         articles.each(function() {
             var textElements = $(this).find(".text");
-            // console.log(textElements[0].innerHTML);
             $(this).slideshow(fadeTime, textElements);
         });
-        // console.log("running slide show");
     }
 
     function weatherSlideshow() {
@@ -605,7 +591,6 @@ $(document).ready(function() {
         console.log("Refreshing now");
         $(mainDiv).empty();
         getNews();
-        // TODO preload images
     }
 
 });
