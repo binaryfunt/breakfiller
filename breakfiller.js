@@ -454,19 +454,19 @@ $(document).ready(function() {
 
 
     function getNews() {
-        $.get(randNewsAPIurl())
-            .done(response => {
-                var articles =  response.articles,
-                    source = response.source;
-                for (var i = 0; i < articles.length; i++) {
-                    createArticle(articles[i], source);
-                }
-                displayTitle(news.sources[source])
-                    .then(newsSlideshow);
-            }).fail(() => {
-                console.error("Failed to fetch news");
-                // TODO: retry request with new URL
-            });
+        const url = randNewsAPIurl();
+        // console.log(url);
+        fetch(url).then(response => response.json())
+        .then(data => {
+            // console.log(data);
+            const {articles, source} =  data;
+            for (const article of articles) {
+                createArticle(article, source);
+            }
+            displayTitle(news.sources[source])
+            .then(newsSlideshow);
+        });
+        // TODO: retry request with new URL if fetch failed
     }
 
 
